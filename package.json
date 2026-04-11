@@ -1,0 +1,30 @@
+{
+  "name": "nior-ai-extension",
+  "version": "1.0.0",
+  "description": "NIOR-AI: On-Device Semantic Annotation of Live Web Pages Without DOM Interference",
+  "type": "module",
+  "scripts": {
+    "test":        "node --experimental-vm-modules test/test_features.js && node --experimental-vm-modules test/test_masked_redraw.js",
+    "test:jest":   "jest",
+    "build":       "node build.js",
+    "zip":         "node -e \"require('archiver')\" && node build.js --zip"
+  },
+  "devDependencies": {
+    "jest":                  "^29.0.0",
+    "@jest/globals":         "^29.0.0"
+  },
+  "jest": {
+    "testEnvironment":      "node",
+    "transform":            {},
+    "extensionsToTreatAsEsm": [".js"],
+    "testMatch":            ["**/test/**/*.js"]
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "browser-extension", "shadow-dom", "onnx", "xgboost",
+    "web-annotation", "dom-interference", "ai-web-agent", "manifest-v3"
+  ],
+  "license": "MIT"
+}

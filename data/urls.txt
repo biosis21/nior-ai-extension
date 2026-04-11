@@ -1,0 +1,17 @@
+https://en.wikipedia.org/wiki/Web_browser
+https://github.com
+https://stackoverflow.com/questions
+https://developer.mozilla.org/en-US/docs/Web/HTML
+https://news.ycombinator.com
+https://vuejs.org
+https://react.dev
+https://docs.python.org/3/
+https://www.w3schools.com/html/
+https://www.smashingmagazine.com
+https://github.com/login
+https://www.geeksforgeeks.org/
+https://www.tutorialspoint.com/index.htm
+https://duckduckgo.com
+https://stripe.com
+https://www.freecodecamp.org/
+https://css-tricks.com/
