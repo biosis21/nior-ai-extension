@@ -16,7 +16,7 @@
 
 'use strict';
 
-import * as ort from '../../../wasm/ort.min.js';
+import * as ort from 'onnxruntime-web';
 
 const MODEL_URL   = chrome.runtime.getURL('wasm/nior_classifier.onnx');
 const WASM_PREFIX = chrome.runtime.getURL('wasm/');
