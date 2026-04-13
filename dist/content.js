@@ -85,6 +85,12 @@
       });
       window.addEventListener("popstate", () => this._onNavigation(), { passive: true });
       window.addEventListener("hashchange", () => this._onNavigation(), { passive: true });
+      requestIdleCallback(() => {
+        const existing = Array.from(document.querySelectorAll("*"));
+        for (const el of existing) {
+          if (!this._seen.has(el)) this._io.observe(el);
+        }
+      }, { timeout: 2e3 });
     }
     // ── Gate 1 ────────────────────────────────────────────────────────────────
     _onMutation(records) {
@@ -358,7 +364,10 @@
     flush() {
       const dirty = [...this._annotations.values()].filter((r) => r.dirty);
       if (dirty.length === 0) return;
-      const { w, h } = this._getSize();
+      const { w: pw, h: ph } = this._getSize();
+      const dpr = window.devicePixelRatio || 1;
+      const w = pw / dpr;
+      const h = ph / dpr;
       const updates = dirty.map((record) => ({
         record,
         bcrNew: record.element.getBoundingClientRect()
@@ -450,15 +459,17 @@
     }
     // ── Initialisation ────────────────────────────────────────────────────────
     _initShadow() {
-      const host = document.body;
+      const host = document.createElement("div");
+      host.style.cssText = "all:initial;position:fixed;top:0;left:0;width:0;height:0;overflow:visible;pointer-events:none;";
+      document.documentElement.appendChild(host);
       this._shadowRoot = host.attachShadow({ mode: "closed" });
       const style = document.createElement("style");
       style.textContent = CANVAS_STYLES;
       this._shadowRoot.appendChild(style);
       this._canvas = document.createElement("canvas");
-      this._setCanvasSize();
       this._shadowRoot.appendChild(this._canvas);
       this._ctx = this._canvas.getContext("2d");
+      this._setCanvasSize();
     }
     _setCanvasSize() {
       const dpr = window.devicePixelRatio || 1;
@@ -599,7 +610,7 @@
     ctx.lineWidth = 2;
     ctx.strokeRect(bcr.x, bcr.y, bcr.width, bcr.height);
     if (config.fill) {
-      ctx.fillStyle = color.replace(")", ", 0.08)").replace("rgb", "rgba");
+      ctx.fillStyle = _colorToRgba(color, 0.15);
       ctx.fillRect(bcr.x, bcr.y, bcr.width, bcr.height);
     }
     if (config.label) {
@@ -610,7 +621,7 @@
   function _drawHighlight(ctx, bcr, color) {
     ctx.save();
     ctx.globalCompositeOperation = "multiply";
-    ctx.fillStyle = color.replace(")", ", 0.15)").replace("rgb", "rgba") || "#2563EB33";
+    ctx.fillStyle = _colorToRgba(color, 0.15);
     ctx.fillRect(bcr.x, bcr.y, bcr.width, bcr.height);
     ctx.restore();
   }
@@ -693,9 +704,15 @@
     });
   }
   function applyPredictions(elements, predictions) {
+    if (!predictions?.length) return;
+    const vwArea = window.innerWidth * window.innerHeight;
     renderer.batch(() => {
       elements.forEach((el, i) => {
+        if (!predictions[i]) return;
         const { label, confidence } = predictions[i];
+        const bcr = el.getBoundingClientRect();
+        const areaFrac = bcr.width * bcr.height / vwArea;
+        if (areaFrac > 0.4) return;
         const existing = elementHandles.get(el);
         if (existing !== void 0) renderer.remove(existing);
         const handle = renderer.annotate(el, {

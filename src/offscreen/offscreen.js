@@ -150,23 +150,28 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     const features = batch.map(b => new Float32Array(b));
 
     (async () => {
-      let predictions = await runInference(features);
+      try {
+        let predictions = await runInference(features);
 
-      // Tier-2: Gemini Nano for low-confidence elements
-      const lowConfIdxs = predictions
-        .map((p, i) => p.lowConf ? i : -1)
-        .filter(i => i !== -1);
+        // Tier-2: Gemini Nano for low-confidence elements
+        const lowConfIdxs = predictions
+          .map((p, i) => p.lowConf ? i : -1)
+          .filter(i => i !== -1);
 
-      if (lowConfIdxs.length > 0) {
-        await Promise.all(lowConfIdxs.map(async (i) => {
-          const geminiResult = await queryGeminiNano(features[i], metas[i]);
-          if (geminiResult) {
-            predictions[i] = { ...predictions[i], ...geminiResult, tier: 2 };
-          }
-        }));
+        if (lowConfIdxs.length > 0) {
+          await Promise.all(lowConfIdxs.map(async (i) => {
+            const geminiResult = await queryGeminiNano(features[i], metas[i]);
+            if (geminiResult) {
+              predictions[i] = { ...predictions[i], ...geminiResult, tier: 2 };
+            }
+          }));
+        }
+
+        sendResponse({ type: 'CLASSIFY_RESULT', id, predictions });
+      } catch (err) {
+        console.error('[NIOR-AI] Inference error:', err);
+        sendResponse({ type: 'CLASSIFY_RESULT', id, predictions: [] });
       }
-
-      sendResponse({ type: 'CLASSIFY_RESULT', id, predictions });
     })();
 
     return true; // keep message channel open for async response

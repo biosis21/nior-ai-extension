@@ -33,9 +33,12 @@ manifest.content_scripts[0].js = ['content.js'];
 writeFileSync('dist/manifest.json', JSON.stringify(manifest, null, 2));
 
 // Copy static assets
-for (const f of ['popup.html', 'offscreen.html']) {
-  cpSync(f, `dist/${f}`);
-}
+cpSync('popup.html', 'dist/popup.html');
+// Rewrite offscreen.html: fix script src for the dist/ root
+writeFileSync(
+  'dist/offscreen.html',
+  readFileSync('offscreen.html', 'utf8').replace('src="dist/offscreen.js"', 'src="offscreen.js"')
+);
 cpSync('icons', 'dist/icons', { recursive: true });
 cpSync('wasm',  'dist/wasm',  { recursive: true });
 

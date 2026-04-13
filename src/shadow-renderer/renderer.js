@@ -66,7 +66,12 @@ export class ShadowRenderer {
   // ── Initialisation ────────────────────────────────────────────────────────
 
   _initShadow() {
-    const host = document.body;
+    // Create a dedicated host element so body's light-DOM children remain
+    // visible. Attaching shadow directly to <body> suppresses rendering of
+    // all body children (no <slot>), making the page content disappear.
+    const host = document.createElement('div');
+    host.style.cssText = 'all:initial;position:fixed;top:0;left:0;width:0;height:0;overflow:visible;pointer-events:none;';
+    document.documentElement.appendChild(host);
 
     // Closed shadow root: element.shadowRoot returns null externally
     this._shadowRoot = host.attachShadow({ mode: 'closed' });
@@ -78,10 +83,10 @@ export class ShadowRenderer {
 
     // Single canvas covers the entire viewport
     this._canvas = document.createElement('canvas');
-    this._setCanvasSize();
     this._shadowRoot.appendChild(this._canvas);
 
     this._ctx = this._canvas.getContext('2d');
+    this._setCanvasSize();  // must be called after _ctx is set so scale(dpr,dpr) applies
   }
 
   _setCanvasSize() {
@@ -238,7 +243,7 @@ function _drawBbox(ctx, bcr, color, config) {
   ctx.lineWidth   = 2;
   ctx.strokeRect(bcr.x, bcr.y, bcr.width, bcr.height);
   if (config.fill) {
-    ctx.fillStyle = color.replace(')', ', 0.08)').replace('rgb', 'rgba');
+    ctx.fillStyle = _colorToRgba(color, 0.15);
     ctx.fillRect(bcr.x, bcr.y, bcr.width, bcr.height);
   }
   if (config.label) {
@@ -250,7 +255,7 @@ function _drawBbox(ctx, bcr, color, config) {
 function _drawHighlight(ctx, bcr, color) {
   ctx.save();
   ctx.globalCompositeOperation = 'multiply';
-  ctx.fillStyle = color.replace(')', ', 0.15)').replace('rgb', 'rgba') || '#2563EB33';
+  ctx.fillStyle = _colorToRgba(color, 0.15);
   ctx.fillRect(bcr.x, bcr.y, bcr.width, bcr.height);
   ctx.restore();
 }

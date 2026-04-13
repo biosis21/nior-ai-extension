@@ -150,6 +150,14 @@ export class CandidateCollector {
     // SPA navigation detection
     window.addEventListener('popstate',   () => this._onNavigation(), { passive: true });
     window.addEventListener('hashchange', () => this._onNavigation(), { passive: true });
+
+    // Initial scan: observe all elements already in the DOM at load time
+    requestIdleCallback(() => {
+      const existing = Array.from(document.querySelectorAll('*'));
+      for (const el of existing) {
+        if (!this._seen.has(el)) this._io.observe(el);
+      }
+    }, { timeout: 2000 });
   }
 
   // ── Gate 1 ────────────────────────────────────────────────────────────────

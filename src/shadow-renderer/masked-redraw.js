@@ -47,7 +47,12 @@ export class MaskedRedrawScheduler {
     const dirty = [...this._annotations.values()].filter(r => r.dirty);
     if (dirty.length === 0) return;
 
-    const { w, h } = this._getSize();
+    // getSize() returns physical pixel dimensions (canvas.width/height).
+    // clearRect must use CSS-pixel coordinates because ctx has scale(dpr,dpr).
+    const { w: pw, h: ph } = this._getSize();
+    const dpr = window.devicePixelRatio || 1;
+    const w = pw / dpr;
+    const h = ph / dpr;
 
     // ── Phase 1: batch BCR reads ──────────────────────────────────────────
     const updates = dirty.map(record => ({

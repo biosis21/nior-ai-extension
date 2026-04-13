@@ -76,9 +76,18 @@ async function handleCandidateBatch(elements) {
 // ── Render results ────────────────────────────────────────────────────────────
 
 function applyPredictions(elements, predictions) {
+  if (!predictions?.length) return;
+  const vwArea = window.innerWidth * window.innerHeight;
   renderer.batch(() => {
     elements.forEach((el, i) => {
+      if (!predictions[i]) return;
       const { label, confidence } = predictions[i];
+
+      // Skip elements that span most of the viewport — page-level containers
+      // (html, body, full-page divs) would stack fills and occlude content.
+      const bcr = el.getBoundingClientRect();
+      const areaFrac = (bcr.width * bcr.height) / vwArea;
+      if (areaFrac > 0.4) return;
 
       // Remove existing annotation for this element if any
       const existing = elementHandles.get(el);
